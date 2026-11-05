@@ -11,6 +11,7 @@ import argparse
 import sys
 
 import bindings
+import records
 import maimai
 
 
@@ -40,11 +41,13 @@ def main(argv=None) -> int:
     p.add_argument("--qq", help="按绑定的 QQ 号查")
     p.add_argument("--openid", help="按群成员 openid 查（需先 bind）")
     p.add_argument("--refresh", action="store_true", help="忽略缓存，强制重拉")
+    p.add_argument("--all", action="store_true", help="查全部成绩（需要导入令牌），并给出推分建议")
 
     b = sub.add_parser("bind", help="绑定 QQ 身份 ↔ 查分器账号")
     b.add_argument("--openid", required=True)
     b.add_argument("--qq", help="QQ 号")
     b.add_argument("--username", help="查分器用户名")
+    b.add_argument("--token", help="导入令牌（查全部成绩用，存在本地）")
 
     a = sub.add_parser("alias", help="管理别名表")
     a.add_argument("op", choices=["list", "add", "remove"])
@@ -82,10 +85,21 @@ def main(argv=None) -> int:
     if args.cmd == "bind":
         try:
             rec = bindings.bind(args.openid, qq=args.qq, username=args.username)
+            if getattr(args, "token", None):
+                records.set_token(args.openid, args.token)
         except ValueError as e:
             print(f"绑定失败：{e}")
             return 2
         print(f"已绑定：{args.openid} → {rec.get('qq') or rec.get('username')}")
+        return 0
+
+    if args.cmd == "player" and getattr(args, "all", False):
+        analysis, source = records.analyze(args.openid, top=args.top, refresh=args.refresh)
+        if analysis.get("ok") is False or "total" not in analysis:
+            print(f"拿不到全成绩：{analysis.get('error')}")
+            print("（需要在查分器「设置 → 导入令牌」复制令牌，然后说「我的令牌是 xxx」）")
+            return 1
+        print(maimai.format_push(analysis))
         return 0
 
     if args.cmd == "player":

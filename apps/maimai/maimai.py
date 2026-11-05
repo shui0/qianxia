@@ -285,6 +285,71 @@ def query_player(username: str | None = None, b50: bool = True, timeout: int = 1
         return {"ok": False, "error": str(e)}
 
 
+RECORDS_API = "https://www.diving-fish.com/api/maimaidxprober/player/records"
+
+
+def query_records(token: str, timeout: int = 20) -> dict:
+    """拉全成绩（b50 之外的所有记录）。需要本人「导入令牌」，非公开接口。"""
+    import urllib.error
+    import urllib.request
+
+    req = urllib.request.Request(
+        RECORDS_API,
+        headers={"User-Agent": UA, "Import-Token": token},
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+        return {"ok": True, "data": data}
+    except urllib.error.HTTPError as e:
+        detail = e.read().decode("utf-8", "ignore")
+        try:
+            msg = json.loads(detail).get("message", detail)
+        except Exception:
+            msg = detail
+        return {"ok": False, "error": msg, "status": e.code}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+def analyze_records(records: list[dict], top: int = 5) -> dict:
+    """全成绩分析：找出「最值得推」的谱面（当前 ra 离理论上限差距最大的）。"""
+    rows = []
+    for r in records or []:
+        ds = r.get("ds")
+        ra = r.get("ra")
+        if ds is None or ra is None:
+            continue
+        cap = math.floor(float(ds) * COEF_TABLE[0][1] * 100)
+        gap = cap - int(ra)
+        if gap <= 0:
+            continue
+        rows.append({
+            "title": r.get("title"),
+            "type": "ST" if r.get("type") == "SD" else "DX",
+            "diff": DIFF_NAMES[r.get("level_index", 0)] if r.get("level_index") is not None else "?",
+            "ds": ds,
+            "ach": r.get("achievements"),
+            "ra": ra,
+            "cap": cap,
+            "gap": gap,
+        })
+    rows.sort(key=lambda x: -x["gap"])
+    return {"total": len(records or []), "candidates": rows[:top], "pushable": len(rows)}
+
+
+def format_push(analysis: dict) -> str:
+    if not analysis.get("candidates"):
+        return "全部成绩都在上限附近了，没什么可推的。"
+    lines = [f"共 {analysis['total']} 条记录，其中 {analysis['pushable']} 首还有推分空间。最值得练的："]
+    for c in analysis["candidates"]:
+        lines.append(
+            f"  【{c['type']}】{c['title']}  {c['diff']} {c['ds']}"
+            f" · 现在 {c['ach']:.2f}% → {c['ra']}，打满能到 {c['cap']}（+{c['gap']}）"
+        )
+    return "\n".join(lines)
+
+
 def format_player(data: dict, top: int = 5) -> str:
     name = data.get("nickname") or data.get("username") or "?"
     rating = data.get("rating") or 0

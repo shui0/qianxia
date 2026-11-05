@@ -126,5 +126,21 @@ pt = maimai.format_player(fake)
 check("玩家卡片含 rating", "15000" in pt)
 check("玩家卡片含曲名与 ST/DX", "ヒバナ" in pt and "【DX】" in pt)
 
+
+# ── 全成绩推分分析 ──
+records = [
+    {"title": "A", "type": "DX", "level_index": 3, "ds": 13.8, "achievements": 97.5, "ra": 180},
+    {"title": "B", "type": "SD", "level_index": 4, "ds": 14.0, "achievements": 100.5, "ra": 313},
+    {"title": "C", "type": "DX", "level_index": 3, "ds": 12.0, "achievements": 100.0, "ra": 259},
+]
+an = maimai.analyze_records(records, top=3)
+check("推分分析：条数", an["total"] == 3)
+check("推分分析：满分的被排除", all(c["title"] != "B" for c in an["candidates"]))
+check("推分分析：优先差距最大", an["candidates"][0]["title"] == "A")
+check("推分分析：上限按最高系数", an["candidates"][0]["cap"] == 309)
+check("推分分析：差距正确", an["candidates"][0]["gap"] == 309 - 180)
+check("推分文案可读", "+" in maimai.format_push(an) and "A" in maimai.format_push(an))
+check("全满给人话", "没什么可推" in maimai.format_push({"candidates": [], "total": 0, "pushable": 0}))
+
 print(f"\n通过 {passed} / 失败 {failed}")
 raise SystemExit(1 if failed else 0)
