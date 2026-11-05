@@ -60,7 +60,7 @@ print(maimai.chart_rating(13.8, 100.5)) # 309
 |---|---|---|
 | `music_data` | 全量曲目、定数、谱面物量 | 否 |
 | `chart_stats` | 每张谱面的**拟合定数**、平均达成率、游玩次数 | 否 |
-| `query/player` | 按查分器用户名查 b50（对方需注册并公开） | 否 |
+| `query/player` | 按查分器用户名**或绑定的 QQ 号**查 b50（对方需注册并公开） | 否 |
 
 拟合定数是社区用真实成绩拟出来的实际难度，比官方定数更能说明问题（例：ヒバナ MASTER 官方 12.0，拟合 12.22）。
 
@@ -81,6 +81,8 @@ print(maimai.chart_rating(13.8, 100.5)) # 309
 & $py cli.py alias add 命嫌 "命に嫌われている"   # 会先校验曲库里有没有这首
 & $py cli.py alias remove 命嫌
 ```
+
+查成绩：`cli.py player <用户名>` 或 `cli.py player --qq <QQ号>`。
 
 ## rating 公式
 

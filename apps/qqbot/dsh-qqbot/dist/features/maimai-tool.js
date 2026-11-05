@@ -76,7 +76,8 @@ export function registerMaimaiTool(ctx, config, logger) {
                 },
                 ds: { type: 'number', description: 'For action=rating: chart constant.' },
                 ach: { type: 'number', description: 'For action=rating: achievement percent, e.g. 100.5.' },
-                username: { type: 'string', description: 'For action=player: 查分器 username.' },
+                username: { type: 'string', description: 'For action=player: 查分器 username (or omit and pass qq).' },
+                qq: { type: 'string', description: 'For action=player: the QQ number bound to their 查分器 account.' },
             },
             required: ['action'],
             additionalProperties: false,
@@ -103,8 +104,9 @@ export function registerMaimaiTool(ctx, config, logger) {
                 text = run(['rating', '--ds', String(args.ds), '--ach', String(args.ach)]);
             }
             else if (action === 'player') {
-                if (!args.username) throw new Error('qqbot_maimai: player 需要 username');
-                text = run(['player', String(args.username), '--top', '5']);
+                if (!args.username && !args.qq) throw new Error('qqbot_maimai: player 需要 username 或 qq');
+                const who = args.username ? [String(args.username)] : ['--qq', String(args.qq)];
+                text = run(['player', ...who, '--top', '5']);
             }
             else {
                 if (!args.query) throw new Error(`qqbot_maimai: ${action} 需要 query`);

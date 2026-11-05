@@ -34,8 +34,9 @@ def main(argv=None) -> int:
     sub.add_parser("count", help="曲库规模")
 
     p = sub.add_parser("player", help="按查分器用户名查成绩")
-    p.add_argument("username")
+    p.add_argument("username", nargs="?", default=None)
     p.add_argument("--top", type=int, default=5)
+    p.add_argument("--qq", help="按绑定的 QQ 号查")
 
     a = sub.add_parser("alias", help="管理别名表")
     a.add_argument("op", choices=["list", "add", "remove"])
@@ -71,7 +72,7 @@ def main(argv=None) -> int:
         return 0 if ok else 1
 
     if args.cmd == "player":
-        res = maimai.query_player(args.username)
+        res = maimai.query_player(args.username, qq=args.qq)
         if not res.get("ok"):
             print(f"查不到「{args.username}」：{res.get('error')}")
             print("（对方需要先在查分器注册并公开成绩）")

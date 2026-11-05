@@ -256,12 +256,17 @@ def chart_stats(song: dict, index: int, stats: dict | None = None) -> dict | Non
     return None
 
 
-def query_player(username: str, b50: bool = True, timeout: int = 15) -> dict:
-    """查群友成绩（查分器用户名）。不需要 token，但对方得先在查分器注册并公开。"""
+def query_player(username: str | None = None, b50: bool = True, timeout: int = 15, qq: str | None = None) -> dict:
+    """查群友成绩。传 username（查分器用户名）或 qq（绑定的 QQ 号），二选一。"""
     import urllib.error
     import urllib.request
 
-    body = json.dumps({"username": username, "b50": bool(b50)}).encode("utf-8")
+    payload = {"b50": bool(b50)}
+    if qq:
+        payload["qq"] = str(qq)
+    else:
+        payload["username"] = username
+    body = json.dumps(payload).encode("utf-8")
     req = urllib.request.Request(
         PLAYER_API, data=body,
         headers={"User-Agent": UA, "Content-Type": "application/json"},
