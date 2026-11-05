@@ -53,6 +53,23 @@ cd apps\video
 关键参数：`--size 1080x1350`（9:16 写 `1080x1920`）、`--style cert|bust`、`--no-typing`、`--gap 0.32`。
 脚本会调 8000 端口的语音服务，**语音服务没起会直接失败**。
 
+## 任务 4：查舞萌曲目 / 算分
+
+```powershell
+cd apps\maimai
+$py = "D:\cosmos\miniconda3\envs\gptsovits\python.exe"
+& $py cli.py search Grievous                     # 搜曲，输出「曲名 [SD/DX] 谱师 最高难度(定数)」
+& $py cli.py song ヒバナ --notes                  # 全部谱面：等级(定数) 物量 谱师
+& $py cli.py rating --ds 13.8 --ach 100.5        # 单谱面 rating → 309
+& $py tests.py                                   # 22 条自测
+& $py update_data.py                             # 新曲上线后刷新曲库
+```
+
+作为库用：`import maimai; songs = maimai.load(); maimai.search(songs, "Grievous")`。
+
+**坑**：只认原题（日文/英文），中文俗称和梗名搜不到；rating = `floor(定数 × 系数 × 100)`，
+系数按达成率取档（≥100.5% → 0.224，≥97% → 0.200，≥80% → 0.136 …），总 rating 是 best35 旧谱 + best15 新谱。
+
 ## 任务 3：用机器人已有能力
 
 机器人在 DSH 里以插件运行，工具名固定，直接调用即可：

@@ -12,7 +12,8 @@ workspace/
 │   ├─ qqbot/dsh-qqbot/       QQ 机器人插件源码（dsh-qqbot 改造版）
 │   ├─ voice/                 语音合成适配层（FastAPI，:8000）
 │   ├─ video/                 蓝底视频流水线（文案 → 配音 → 成片）
-│   └─ publish/               B 站投稿（登录 / 投稿 / 查状态）
+│   ├─ publish/               B 站投稿（登录 / 投稿 / 查状态）
+│   └─ maimai/                舞萌 DX 曲库与评分查询（1405 首，纯标准库）
 │
 ├─ assets/                    素材：立绘 chinatsu_raw.webp、蓝底底图 bg_ref.png
 ├─ stickers/                  QQ 表情包库（152 张，音击/舞萌/中二）
@@ -107,6 +108,23 @@ cd apps\publish
 
 已知限制：替换已发布稿件（`web/edit` 报 21001、`client/edit` 报 -101）与删除稿件（需极验验证码）
 走不通，要改就重投一条、旧的去创作中心手动删。
+
+## 5. 舞萌曲库（apps/maimai）
+
+群友问「这首多少级」「打这个能加多少分」时用。纯标准库，不联网。
+
+```powershell
+cd apps\maimai
+$py = "D:\cosmos\miniconda3\envs\gptsovits\python.exe"
+
+& $py cli.py search Grievous          # 搜曲
+& $py cli.py song ヒバナ --notes       # 全部谱面（物量、谱师）
+& $py cli.py rating --ds 13.8 --ach 100.5   # → 309
+& $py tests.py                        # 22 条自测
+& $py update_data.py                  # 新曲上线后刷新曲库
+```
+
+数据来自查分器公开接口（只读免登录），rating 公式与限制见 `apps/maimai/README.md`。
 
 ## 注意
 
