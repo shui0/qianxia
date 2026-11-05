@@ -65,7 +65,7 @@ export function registerMaimaiTool(ctx, config, logger) {
             properties: {
                 action: {
                     type: 'string',
-                    enum: ['search', 'song', 'rating', 'player', 'count'],
+                    enum: ['search', 'song', 'rating', 'player', 'bind', 'count'],
                     description: 'Which query to run.',
                 },
                 query: { type: 'string', description: 'Song title or nickname for search/song.' },
@@ -78,6 +78,7 @@ export function registerMaimaiTool(ctx, config, logger) {
                 ach: { type: 'number', description: 'For action=rating: achievement percent, e.g. 100.5.' },
                 username: { type: 'string', description: 'For action=player: 查分器 username (or omit and pass qq).' },
                 qq: { type: 'string', description: 'For action=player: the QQ number bound to their 查分器 account.' },
+                openid: { type: 'string', description: 'For action=player: the sender openid from the message tag [昵称 (openid)]; uses the saved binding.' },
             },
             required: ['action'],
             additionalProperties: false,
@@ -103,9 +104,19 @@ export function registerMaimaiTool(ctx, config, logger) {
                 }
                 text = run(['rating', '--ds', String(args.ds), '--ach', String(args.ach)]);
             }
+            else if (action === 'bind') {
+                if (!args.openid) throw new Error('qqbot_maimai: bind 需要 openid（消息里的 ([昵称 (openid)])）');
+                const who = args.qq ? ['--qq', String(args.qq)]
+                    : args.username ? ['--username', String(args.username)] : null;
+                if (!who) throw new Error('qqbot_maimai: bind 需要 qq 或 username');
+                text = run(['bind', '--openid', String(args.openid), ...who]);
+            }
             else if (action === 'player') {
-                if (!args.username && !args.qq) throw new Error('qqbot_maimai: player 需要 username 或 qq');
-                const who = args.username ? [String(args.username)] : ['--qq', String(args.qq)];
+                let who;
+                if (args.openid) who = ['--openid', String(args.openid)];
+                else if (args.qq) who = ['--qq', String(args.qq)];
+                else if (args.username) who = [String(args.username)];
+                else throw new Error('qqbot_maimai: player 需要 openid / qq / username 之一');
                 text = run(['player', ...who, '--top', '5']);
             }
             else {
