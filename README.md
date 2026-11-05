@@ -25,6 +25,11 @@ workspace/
 └─ archive/                   归档：patches、tests、scratch、legacy
 ```
 
+## 给 Agent 的操作手册（skill）
+
+`skills/qianxia/SKILL.md` 是一份可被 Agent 直接加载的技能：触发条件、前置路径、可直接粘贴的命令、还有一张踩坑排错表。
+人类看 README 知道"有什么"，Agent 读 skill 才知道"怎么跑"——两者互补，别只留一个。
+
 ## 环境
 
 | 项 | 路径 |

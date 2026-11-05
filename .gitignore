@@ -45,3 +45,12 @@ desktop.ini
 
 # 整理前的旧路径副本，重复内容
 voice-server/
+
+# 一次性脚本（登录/探针/临时改写），不进仓库
+gh-login-push*.mjs
+ghdevice*.mjs
+scratch/
+*.tmp
+
+# 根目录的 .mjs 都是临时脚本
+/*.mjs
