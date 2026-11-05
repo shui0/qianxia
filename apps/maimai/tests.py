@@ -98,5 +98,33 @@ with tempfile.TemporaryDirectory() as td:
     check("别名能删除", maimai.delete_alias("测试别名", path=p) is True)
     check("删不存在的别名返回 False", maimai.delete_alias("没有这个", path=p) is False)
 
+
+# ── 谱面类型（ST / DX / 宴）──
+check("SD 显示为 ST", maimai.type_label("SD") == "ST")
+check("DX 显示为 DX", maimai.type_label("DX") == "DX")
+check("utage 显示为 宴", maimai.type_label("utage") == "宴")
+
+entries = maimai.same_title(songs, "六兆年と一夜物語")
+check("同名条目有 ST 和 DX", len(entries) == 2, f"实际 {len(entries)}")
+tags = {maimai.type_label(e["type"]) for e in entries}
+check("两类谱面都在", tags == {"ST", "DX"}, str(tags))
+
+text = maimai.format_entries(entries)
+check("合并输出含两种标签", "【ST】" in text and "【DX】" in text)
+check("合并输出含拟合定数", "拟合" in text)
+
+# ── 统计与玩家 ──
+stats = maimai.load_stats()
+check("统计表非空", len(stats) > 100, f"实际 {len(stats)}")
+st = maimai.chart_stats(songs[0], 0, stats)
+check("能取到拟合定数", st is not None and st.get("fit") is not None, str(st))
+
+fake = {"nickname": "测试", "rating": 15000, "charts": {"dx": [
+    {"title": "ヒバナ", "level_index": 3, "ds": 12.0, "achievements": 100.5, "ra": 268, "type": "DX"}
+], "sd": []}}
+pt = maimai.format_player(fake)
+check("玩家卡片含 rating", "15000" in pt)
+check("玩家卡片含曲名与 ST/DX", "ヒバナ" in pt and "【DX】" in pt)
+
 print(f"\n通过 {passed} / 失败 {failed}")
 raise SystemExit(1 if failed else 0)

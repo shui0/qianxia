@@ -115,6 +115,12 @@ export const ConfigSchema = Schema.object({
         format: Schema.string().default('wav').description('期望的音频格式 wav/mp3'),
         timeoutMs: Schema.number().default(30000).description('推理超时(ms)'),
     }).default({ enabled: false, endpoint: '', token: '', speaker: '', format: 'wav', timeoutMs: 30000 }).description('语音条'),
+    maimai: Schema.object({
+        enabled: Schema.boolean().default(true).description('启用 qqbot_maimai 曲库工具'),
+        python: Schema.string().default('python').description('跑 cli.py 的 python'),
+        dir: Schema.string().default('').description('apps/maimai 的绝对路径'),
+        timeoutMs: Schema.number().default(20000).description('查询超时(ms)'),
+    }).default({ enabled: true, python: 'python', dir: '', timeoutMs: 20000 }).description('舞萌曲库'),
     sendFile: Schema.object({
         restrictPaths: Schema.boolean().default(true).description('是否启用路径白名单（默认 true，仅允许 media + cwd + extraRoots）'),
         extraRoots: Schema.array(Schema.string()).default([]).description('额外允许访问的根目录'),

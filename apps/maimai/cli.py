@@ -25,12 +25,17 @@ def main(argv=None) -> int:
     d.add_argument("query")
     d.add_argument("--notes", action="store_true", help="显示物量与谱师")
     d.add_argument("--limit", type=int, default=5)
+    d.add_argument("--style", choices=["st","dx","all"], default="all", help="只看标准谱/只看DX谱")
 
     r = sub.add_parser("rating", help="按定数与达成率算单谱面 rating")
     r.add_argument("--ds", type=float, required=True)
     r.add_argument("--ach", type=float, required=True)
 
     sub.add_parser("count", help="曲库规模")
+
+    p = sub.add_parser("player", help="按查分器用户名查成绩")
+    p.add_argument("username")
+    p.add_argument("--top", type=int, default=5)
 
     a = sub.add_parser("alias", help="管理别名表")
     a.add_argument("op", choices=["list", "add", "remove"])
@@ -65,6 +70,15 @@ def main(argv=None) -> int:
         print("已删除" if ok else "没这个别名")
         return 0 if ok else 1
 
+    if args.cmd == "player":
+        res = maimai.query_player(args.username)
+        if not res.get("ok"):
+            print(f"查不到「{args.username}」：{res.get('error')}")
+            print("（对方需要先在查分器注册并公开成绩）")
+            return 1
+        print(maimai.format_player(res["data"], top=args.top))
+        return 0
+
     songs = maimai.load()
 
     if args.cmd == "count":
@@ -92,14 +106,19 @@ def main(argv=None) -> int:
             tops = [c for c in maimai.charts(song) if c.name in ("MASTER", "Re:MASTER")]
             top = tops[-1] if tops else None
             extra = f"  {top.level}({top.ds:g})" if top else ""
-            print(f"{song.get('title')}  [{song.get('type')}]  {info.get('artist', '')}{extra}")
+            print(f"【{maimai.type_label(song.get('type', ''))}】{song.get('title')}  {info.get('artist', '')}{extra}")
         return 0
 
-    song = hits[0]
-    print(maimai.format_song(song, with_notes=args.notes))
+    title = hits[0].get("title", "")
+    entries = maimai.same_title(songs, title)
+    if getattr(args, "style", "all") != "all":
+        want = "ST" if args.style == "st" else "DX"
+        entries = [e for e in entries if maimai.type_label(e.get("type", "")) == want] or entries
+    print(maimai.format_entries(entries, with_notes=args.notes))
     if len(hits) > 1:
-        others = "、".join(h.get("title", "") for h in hits[1:])
-        print(f"\n（还有相近的：{others}）")
+        others = "、".join(h.get("title", "") for h in hits[1:] if h.get("title") != title)
+        if others:
+            print(f"\n（还有相近的：{others}）")
     return 0
 
 

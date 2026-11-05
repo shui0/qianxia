@@ -34,10 +34,35 @@ print(maimai.format_song(hit))          # 适合直接发群里的文本
 print(maimai.chart_rating(13.8, 100.5)) # 309
 ```
 
+## 谱面类型：ST / DX / 宴
+
+同一首歌在游戏里可能有两张完全不同的谱面，定数也不同，输出里用标签区分：
+
+| 标签 | 数据里的 type | 说明 |
+|---|---|---|
+| 【ST】 | SD | 标准谱面 |
+| 【DX】 | DX | DX 谱面（多数新曲只有这个） |
+| 【宴】 | utage | 宴会场谱面（**公开数据源目前不含，见下**） |
+
+同名曲会**一起显示**（先 ST 后 DX），`--style st|dx` 可以只看其中一种。
+
+> 宴会场：查分器公开接口只给 ST/DX，宴谱没有开放数据。真要支持得另找来源
+> （社区整理的 utage 表），落成 `data/utage.json` 后按同样结构并进来即可。
+
 ## 数据
 
 来源：<https://www.diving-fish.com/api/maimaidxprober/music_data>（查分器的公开接口，只读、免登录）。
 每首歌带 `title / type / ds[] / level[] / charts[] / basic_info{artist,bpm,genre,from}`。
+
+另有两条同样来自查分器的接口：
+
+| 接口 | 用途 | 是否要 token |
+|---|---|---|
+| `music_data` | 全量曲目、定数、谱面物量 | 否 |
+| `chart_stats` | 每张谱面的**拟合定数**、平均达成率、游玩次数 | 否 |
+| `query/player` | 按查分器用户名查 b50（对方需注册并公开） | 否 |
+
+拟合定数是社区用真实成绩拟出来的实际难度，比官方定数更能说明问题（例：ヒバナ MASTER 官方 12.0，拟合 12.22）。
 
 刷新后曲库会覆盖 `data/music_data.json`，旧文件不保留备份（数据是公开的，随时可重拉）。
 
