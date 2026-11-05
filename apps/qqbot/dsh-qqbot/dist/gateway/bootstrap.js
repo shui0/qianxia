@@ -21,6 +21,7 @@ import { registerAffinityTool } from "../features/affinity-tool.js";
 import { registerDiaryTool } from "../features/diary-tool.js";
 import { registerSayTool } from "../features/voice-tool.js";
 import { registerMaimaiTool } from "../features/maimai-tool.js";
+import { registerBiliTool } from "../features/bili-tool.js";
 import { registerFightTool } from "../features/fight-tool.js";
 import { registerMinigameTool } from "../features/minigame-tool.js";
 import { DeliverablesDeliverer } from "../transport/deliverables.js";
@@ -184,6 +185,8 @@ export async function bootstrapGateway(ctx, agents, config, logger) {
     registerSayTool(ctx, mediaSender, manager, config, logger);
     // ── 舞萌曲库（qqbot_maimai）──
     registerMaimaiTool(ctx, config, logger);
+    // ── 逛 B 站（qqbot_bili）──
+    registerBiliTool(ctx, config, logger);
     // ── 斗图工具（qqbot_sticker_fight）──
     registerFightTool(ctx, mediaSender, manager, config, logger);
     // ── 小游戏工具（qqbot_minigame）──

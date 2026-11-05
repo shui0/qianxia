@@ -13,7 +13,8 @@ workspace/
 │   ├─ voice/                 语音合成适配层（FastAPI，:8000）
 │   ├─ video/                 蓝底视频流水线（文案 → 配音 → 成片）
 │   ├─ publish/               B 站投稿（登录 / 投稿 / 查状态）
-│   └─ maimai/                舞萌 DX 曲库与评分查询（1405 首，纯标准库）
+│   ├─ maimai/                舞萌 DX 曲库与评分查询（1405 首，纯标准库）
+│   └─ bili/                  逛 B 站：搜索 / 视频信息 / 评论 / 发评论
 │
 ├─ assets/                    素材：立绘 chinatsu_raw.webp、蓝底底图 bg_ref.png
 ├─ stickers/                  QQ 表情包库（152 张，音击/舞萌/中二）
@@ -126,6 +127,24 @@ $py = "D:\cosmos\miniconda3\envs\gptsovits\python.exe"
 ```
 
 数据来自查分器公开接口（只读免登录），rating 公式与限制见 `apps/maimai/README.md`。
+
+## 6. 逛 B 站（apps/bili）
+
+读：搜索、看视频信息、读热门评论（匿名即可）。
+写：发评论需要登录态（`apps/publish/cookies.json`）。
+
+```powershell
+cd apps\bili
+$env:PYTHONPATH = "C:\Users\baizh\.dsh\bot\workspace\tools\biliapi"
+& $py cli.py search 桥姬
+& $py cli.py info BV1xx411c7mD
+& $py cli.py comments BV1xx411c7mD
+& $py cli.py post BV1xx411c7mD "内容"        # 预演
+& $py cli.py post BV1xx411c7mD "内容" --yes  # 真发
+& $py cli.py whoami
+```
+
+机器人侧对应 `qqbot_bili`：发评论必须带 `confirm=true`，且先复述内容让用户确认。
 
 ## 注意
 

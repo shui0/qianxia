@@ -71,6 +71,20 @@ $py = "D:\cosmos\miniconda3\envs\gptsovits\python.exe"
 **坑**：只认原题（日文/英文），中文俗称和梗名搜不到；rating = `floor(定数 × 系数 × 100)`，
 系数按达成率取档（≥100.5% → 0.224，≥97% → 0.200，≥80% → 0.136 …），总 rating 是 best35 旧谱 + best15 新谱。
 
+## 任务 5：逛 B 站
+
+```powershell
+cd apps\bili
+$env:PYTHONPATH = "C:\Users\baizh\.dsh\bot\workspace\tools\biliapi"
+& $py cli.py search 关键词
+& $py cli.py info BV1xxx
+& $py cli.py comments BV1xxx
+& $py cli.py whoami
+```
+
+机器人侧 `qqbot_bili`：search / info / comments / post / whoami。
+**发评论是公开不可撤回的**：必须 confirm=true，且先复述内容。别连续发同一条视频。
+
 ## 任务 3：用机器人已有能力
 
 机器人在 DSH 里以插件运行，工具名固定，直接调用即可：

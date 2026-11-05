@@ -59,7 +59,11 @@ export function registerMaimaiTool(ctx, config, logger) {
             + 'average achievement and play count, and separates ST / DX charts; '
             + 'action="rating" computes the single-chart rating from ds + achievement; '
             + 'action="player" looks up someone\'s b50 by their 查分器 username. '
-            + 'Use when someone asks 这首多少级 / 定数多少 / 打这个能加多少分 / 帮我查下成绩.',
+            + 'Use when someone asks 这首多少级 / 定数多少 / 打这个能加多少分 / 帮我查下成绩. '
+            + 'IMPORTANT — bind: when the user says 我是 <QQ号> / 记住我的号 / 我的令牌是 <token> / '
+            + 'my import token is <token>, call action="bind" with their openid (from the [昵称 (openid)] tag) '
+            + 'plus qq (or username) and/or token. A token unlocks full-record queries (action=player with all=true); '
+            + 'without it only best-50 is available. Never echo the token back.',
         parameters: {
             type: 'object',
             properties: {
