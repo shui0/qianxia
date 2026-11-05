@@ -32,7 +32,39 @@ def main(argv=None) -> int:
 
     sub.add_parser("count", help="曲库规模")
 
+    a = sub.add_parser("alias", help="管理别名表")
+    a.add_argument("op", choices=["list", "add", "remove"])
+    a.add_argument("alias", nargs="?")
+    a.add_argument("title", nargs="?")
+
     args = ap.parse_args(argv)
+
+    if args.cmd == "alias":
+        aliases = maimai.load_aliases()
+        if args.op == "list":
+            if not aliases:
+                print("（空）")
+            for k, v in aliases.items():
+                print(f"{k}  →  {v}")
+            return 0
+        if args.op == "add" and (not args.alias or not args.title):
+            print("用法：alias add <别名> <正式曲名>")
+            return 2
+        if args.op == "remove" and not args.alias:
+            print("用法：alias remove <别名>")
+            return 2
+        if args.op == "add":
+            songs_all = maimai.load()
+            if not maimai.search(songs_all, args.title, limit=1, aliases={}):
+                print(f"曲库里没有「{args.title}」，先确认正式曲名")
+                return 1
+            maimai.save_alias(args.alias, args.title)
+            print(f"已添加：{args.alias} → {args.title}")
+            return 0
+        ok = maimai.delete_alias(args.alias)
+        print("已删除" if ok else "没这个别名")
+        return 0 if ok else 1
+
     songs = maimai.load()
 
     if args.cmd == "count":
@@ -44,7 +76,12 @@ def main(argv=None) -> int:
         print(maimai.format_rating(args.ds, args.ach))
         return 0
 
-    hits = maimai.search(songs, args.query, limit=args.limit)
+    aliases = maimai.load_aliases()
+    resolved, hit = maimai.resolve_alias(args.query, aliases)
+    if hit:
+        print(f"（别名「{hit}」→ {resolved}）\n")
+
+    hits = maimai.search(songs, args.query, limit=args.limit, aliases=aliases)
     if not hits:
         print(f"没找到「{args.query}」")
         return 1

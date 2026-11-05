@@ -61,6 +61,7 @@ $py = "D:\cosmos\miniconda3\envs\gptsovits\python.exe"
 & $py cli.py search Grievous                     # 搜曲，输出「曲名 [SD/DX] 谱师 最高难度(定数)」
 & $py cli.py song ヒバナ --notes                  # 全部谱面：等级(定数) 物量 谱师
 & $py cli.py rating --ds 13.8 --ach 100.5        # 单谱面 rating → 309
+& $py cli.py alias list                          # 俗称表；add/remove 可维护
 & $py tests.py                                   # 22 条自测
 & $py update_data.py                             # 新曲上线后刷新曲库
 ```

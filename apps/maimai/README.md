@@ -41,6 +41,22 @@ print(maimai.chart_rating(13.8, 100.5)) # 309
 
 刷新后曲库会覆盖 `data/music_data.json`，旧文件不保留备份（数据是公开的，随时可重拉）。
 
+## 别名表
+
+中文俗称、罗马字、B 站喊法大多对不上数据里的正式曲名，所以在 `data/aliases.json` 里维护了一张映射：
+
+```json
+{ "命嫌": "命に嫌われている", "六兆年": "六兆年と一夜物語", "砂星": "砂の惑星 feat. HATSUNE MIKU" }
+```
+
+搜索时先过别名表，命中会提示「别名『命嫌』→ 命に嫌われている」。管理命令：
+
+```powershell
+& $py cli.py alias list
+& $py cli.py alias add 命嫌 "命に嫌われている"   # 会先校验曲库里有没有这首
+& $py cli.py alias remove 命嫌
+```
+
 ## rating 公式
 
 单谱面 rating = `floor(定数 × 系数 × 100)`，系数按达成率取档：

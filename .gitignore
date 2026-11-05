@@ -54,3 +54,6 @@ scratch/
 
 # 根目录的 .mjs 都是临时脚本
 /*.mjs
+
+# 一次性校验脚本
+/valias.py

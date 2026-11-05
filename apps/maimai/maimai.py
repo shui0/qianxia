@@ -1,15 +1,15 @@
 """舞萌 DX 曲库与评分的核心逻辑（无第三方依赖，纯标准库）。
 
 数据来自查分器公开接口（diving-fish），缓存到 data/music_data.json。
-这里只做「查」和「算」，不碰账号、不联网（除了 update_data.py 刷新数据）。
+别名表在 data/aliases.json：俗称/中文名 → 正式曲名，搜索时先过一遍。
 
 用法：
     from maimai import load, search, format_song, chart_rating
 
     songs = load()
-    hit = search(songs, "Grievous")[0]
+    hit = search(songs, "命嫌")[0]        # 别名也能搜到
     print(format_song(hit))
-    print(chart_rating(13.8, 100.5))   # -> 309
+    print(chart_rating(13.8, 100.5))      # -> 309
 """
 from __future__ import annotations
 
@@ -21,6 +21,7 @@ from dataclasses import dataclass
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 DATA = os.path.join(HERE, "data", "music_data.json")
+ALIASES = os.path.join(HERE, "data", "aliases.json")
 
 DIFF_NAMES = ["BASIC", "ADVANCED", "EXPERT", "MASTER", "Re:MASTER"]
 
@@ -57,6 +58,59 @@ def load(path: str = DATA) -> list[dict]:
         return json.load(fh)
 
 
+# ── 别名 ──
+
+def load_aliases(path: str = ALIASES) -> dict[str, str]:
+    if not os.path.exists(path):
+        return {}
+    with open(path, encoding="utf-8") as fh:
+        raw = json.load(fh)
+    return {k: v for k, v in raw.items() if not k.startswith("_") and isinstance(v, str)}
+
+
+def _norm(s: str) -> str:
+    return "".join(ch for ch in str(s).lower() if not ch.isspace())
+
+
+def resolve_alias(query: str, aliases: dict[str, str]) -> tuple[str, str | None]:
+    """把俗称换成正式曲名。返回 (用于搜索的词, 命中的别名或 None)。"""
+    q = _norm(query)
+    if not q:
+        return query, None
+    for alias, title in aliases.items():
+        if _norm(alias) == q:
+            return title, alias
+    return query, None
+
+
+def save_alias(alias: str, title: str, path: str = ALIASES) -> None:
+    raw = {}
+    if os.path.exists(path):
+        with open(path, encoding="utf-8") as fh:
+            raw = json.load(fh)
+    raw[alias] = title
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w", encoding="utf-8") as fh:
+        json.dump(raw, fh, ensure_ascii=False, indent=2, sort_keys=False)
+        fh.write("\n")
+
+
+def delete_alias(alias: str, path: str = ALIASES) -> bool:
+    if not os.path.exists(path):
+        return False
+    with open(path, encoding="utf-8") as fh:
+        raw = json.load(fh)
+    if alias not in raw:
+        return False
+    del raw[alias]
+    with open(path, "w", encoding="utf-8") as fh:
+        json.dump(raw, fh, ensure_ascii=False, indent=2, sort_keys=False)
+        fh.write("\n")
+    return True
+
+
+# ── 评分 ──
+
 def coefficient(achievement: float) -> float:
     """成就率 → 系数。achievement 用百分数，如 100.5。"""
     for threshold, coef in COEF_TABLE:
@@ -88,12 +142,14 @@ def charts(song: dict) -> list[Chart]:
     return out
 
 
-def _norm(s: str) -> str:
-    return "".join(ch for ch in s.lower() if not ch.isspace())
+# ── 搜索 ──
 
+def search(songs: list[dict], query: str, limit: int = 5, aliases: dict[str, str] | None = None) -> list[dict]:
+    """先过别名，再精确/子串，最后模糊。返回按匹配度排序的歌曲列表。"""
+    if aliases is None:
+        aliases = load_aliases()
+    query, _ = resolve_alias(query, aliases)
 
-def search(songs: list[dict], query: str, limit: int = 5) -> list[dict]:
-    """先精确/子串，再模糊。返回按匹配度排序的歌曲列表。"""
     q = _norm(query)
     if not q:
         return []
@@ -111,7 +167,6 @@ def search(songs: list[dict], query: str, limit: int = 5) -> list[dict]:
     if exact or prefix or contains:
         return (exact + prefix + contains)[:limit]
 
-    # 模糊：按相似度取前几名，低于阈值的不返回
     scored = []
     for s, t in titles:
         r = difflib.SequenceMatcher(None, q, t).ratio()

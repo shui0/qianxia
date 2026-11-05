@@ -65,5 +65,38 @@ text = maimai.format_song(song, with_notes=True)
 check("格式化包含标题", "ヒバナ" in text)
 check("格式化包含定数", "13.2" in text)
 
+# ── 别名 ──
+import os
+import tempfile
+
+aliases = maimai.load_aliases()
+check("别名表非空", len(aliases) >= 10, f"实际 {len(aliases)}")
+
+bad = [k for k, v in aliases.items() if not maimai.search(songs, v, limit=1, aliases={})]
+check("每个别名都指向真实曲目", bad == [], f"坏的: {bad}")
+
+resolved, hit = maimai.resolve_alias("命嫌", aliases)
+check("别名能解析", resolved == "命に嫌われている" and hit == "命嫌", f"{resolved} / {hit}")
+
+resolved, hit = maimai.resolve_alias("不存在的别名", aliases)
+check("未知别名原样返回", resolved == "不存在的别名" and hit is None)
+
+hits = maimai.search(songs, "命嫌")
+check("用别名能搜到曲", hits and hits[0]["title"] == "命に嫌われている", str(hits[:1]))
+
+hits = maimai.search(songs, "六兆年")
+check("别名搜到带后缀的歌", hits and hits[0]["title"] == "六兆年と一夜物語")
+
+hits = maimai.search(songs, "KING", aliases={})
+check("关闭别名时按原名搜", hits and hits[0]["title"] == "KING")
+
+with tempfile.TemporaryDirectory() as td:
+    p = os.path.join(td, "aliases.json")
+    maimai.save_alias("测试别名", "ヒバナ", path=p)
+    got = maimai.load_aliases(path=p)
+    check("别名能写入并读回", got.get("测试别名") == "ヒバナ", str(got))
+    check("别名能删除", maimai.delete_alias("测试别名", path=p) is True)
+    check("删不存在的别名返回 False", maimai.delete_alias("没有这个", path=p) is False)
+
 print(f"\n通过 {passed} / 失败 {failed}")
 raise SystemExit(1 if failed else 0)

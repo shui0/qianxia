@@ -120,6 +120,7 @@ $py = "D:\cosmos\miniconda3\envs\gptsovits\python.exe"
 & $py cli.py search Grievous          # 搜曲
 & $py cli.py song ヒバナ --notes       # 全部谱面（物量、谱师）
 & $py cli.py rating --ds 13.8 --ach 100.5   # → 309
+& $py cli.py alias list                 # 俗称表（命嫌/六兆年/砂星…）
 & $py tests.py                        # 22 条自测
 & $py update_data.py                  # 新曲上线后刷新曲库
 ```
