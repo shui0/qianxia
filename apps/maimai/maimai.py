@@ -312,40 +312,71 @@ def query_records(token: str, timeout: int = 20) -> dict:
         return {"ok": False, "error": str(e)}
 
 
-def analyze_records(records: list[dict], top: int = 5) -> dict:
-    """全成绩分析：找出「最值得推」的谱面（当前 ra 离理论上限差距最大的）。"""
+def next_tier(achievement: float) -> tuple[float, float] | None:
+    """达成率 → 下一档的 (门槛, 系数)。已经满档返回 None。"""
+    tiers = sorted(COEF_TABLE)          # 升序
+    for th, coef in tiers:
+        if th > achievement:
+            return th, coef
+    return None
+
+
+MIN_ACH = 90.0  # 低于这个达成率视为「还没认真打」，不参与推分排序
+
+
+def analyze_records(records: list[dict], top: int = 5, min_ach: float = MIN_ACH,
+                    max_delta: float = 4.0) -> dict:
+    """推分建议：只算「再打一点点就能进下一档」的谱面。
+
+    比「离理论上限差多少」实用得多——14.6 的谱从 92% 打到 100.5% 不现实，
+    但从 99.1% 打到 99.5% 往往一把就能成。
+    """
     rows = []
     for r in records or []:
         ds = r.get("ds")
         ra = r.get("ra")
+        ach = r.get("achievements") or 0
         if ds is None or ra is None:
             continue
-        cap = math.floor(float(ds) * COEF_TABLE[0][1] * 100)
-        gap = cap - int(ra)
-        if gap <= 0:
+        if ach < min_ach or ra <= 0:
+            continue
+        nxt = next_tier(ach)
+        if nxt is None:
+            continue
+        threshold, coef = nxt
+        delta = threshold - ach
+        if delta > max_delta:
+            continue
+        new_ra = math.floor(float(ds) * coef * 100)
+        gain = new_ra - int(ra)
+        if gain <= 0:
             continue
         rows.append({
             "title": r.get("title"),
             "type": "ST" if r.get("type") == "SD" else "DX",
             "diff": DIFF_NAMES[r.get("level_index", 0)] if r.get("level_index") is not None else "?",
             "ds": ds,
-            "ach": r.get("achievements"),
+            "ach": ach,
+            "target": threshold,
             "ra": ra,
-            "cap": cap,
-            "gap": gap,
+            "new_ra": new_ra,
+            "gain": gain,
+            "delta": delta,
         })
-    rows.sort(key=lambda x: -x["gap"])
+    # 先按涨幅，再按「离门槛多近」
+    rows.sort(key=lambda x: (-x["gain"], x["delta"]))
     return {"total": len(records or []), "candidates": rows[:top], "pushable": len(rows)}
 
 
 def format_push(analysis: dict) -> str:
     if not analysis.get("candidates"):
-        return "全部成绩都在上限附近了，没什么可推的。"
-    lines = [f"共 {analysis['total']} 条记录，其中 {analysis['pushable']} 首还有推分空间。最值得练的："]
+        return "最近没什么能一把推上去的谱面，先把已经 99% 的磨一磨？"
+    lines = [f"共 {analysis['total']} 条记录，{analysis['pushable']} 首「再打一点就能进下一档」。最划算的："]
     for c in analysis["candidates"]:
         lines.append(
             f"  【{c['type']}】{c['title']}  {c['diff']} {c['ds']}"
-            f" · 现在 {c['ach']:.2f}% → {c['ra']}，打满能到 {c['cap']}（+{c['gap']}）"
+            f" · 现在 {c['ach']:.2f}% → {c['ra']}，"
+            f"打到 {c['target']:g}% 能到 {c['new_ra']}（+{c['gain']}，还差 {c['delta']:.2f}%）"
         )
     return "\n".join(lines)
 

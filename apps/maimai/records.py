@@ -66,7 +66,11 @@ def fetch_records(openid: str, refresh: bool = False) -> tuple[dict, str | None]
     res = maimai.query_records(token)
     if not res.get("ok"):
         return res, None
-    records = res["data"]
+    payload = res["data"]
+    # /player/records 返回 {"username":..,"rating":..,"records":[...]}
+    records = payload.get("records") if isinstance(payload, dict) else payload
+    if not isinstance(records, list):
+        return {"ok": False, "error": "接口返回结构异常"}, None
     store = _load()
     store[openid] = {"fetched_at": int(time.time()), "records": records}
     _save(store)

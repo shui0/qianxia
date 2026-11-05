@@ -135,12 +135,12 @@ records = [
 ]
 an = maimai.analyze_records(records, top=3)
 check("推分分析：条数", an["total"] == 3)
-check("推分分析：满分的被排除", all(c["title"] != "B" for c in an["candidates"]))
-check("推分分析：优先差距最大", an["candidates"][0]["title"] == "A")
-check("推分分析：上限按最高系数", an["candidates"][0]["cap"] == 309)
-check("推分分析：差距正确", an["candidates"][0]["gap"] == 309 - 180)
-check("推分文案可读", "+" in maimai.format_push(an) and "A" in maimai.format_push(an))
-check("全满给人话", "没什么可推" in maimai.format_push({"candidates": [], "total": 0, "pushable": 0}))
+check("推分分析：满档的被排除", all(c["title"] != "B" for c in an["candidates"]))
+check("推分分析：只收「离下一档不远」的", all(c["delta"] <= 4.0 for c in an["candidates"]))
+check("推分分析：涨幅正确", an["candidates"][0]["gain"] == an["candidates"][0]["new_ra"] - an["candidates"][0]["ra"])
+check("推分分析：目标档位高于当前", all(c["target"] > c["ach"] for c in an["candidates"]))
+check("推分文案可读", "+" in maimai.format_push(an))
+check("空集给人话", "没什么能一把推" in maimai.format_push({"candidates": [], "total": 0, "pushable": 0}))
 
 print(f"\n通过 {passed} / 失败 {failed}")
 raise SystemExit(1 if failed else 0)
