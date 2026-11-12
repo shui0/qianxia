@@ -1,5 +1,7 @@
 # 千夏项目（qianxia）
 
+使用 QQ 小号独立运行千夏，请见 [NoneBot2 + NapCat 启动说明](apps/qqbot/standalone/README.md)。
+
 一个仓库，四个子应用：**QQ 机器人**、**语音合成**、**蓝底视频**、**B 站投稿**。
 它们共用同一套 Python 环境与同一份素材，但独立运行、互不阻塞。
 
