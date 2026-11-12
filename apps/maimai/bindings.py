@@ -106,7 +106,7 @@ def write_cache(data: dict, qq: str | None = None, username: str | None = None,
 # ── 对外入口 ──
 
 def fetch(openid: str | None = None, qq: str | None = None, username: str | None = None,
-          refresh: bool = False):
+          refresh: bool = False, *, fallback_qq: str | None = None):
     """按 openid / qq / username 取成绩。返回 (data, source)。
 
     source: 'cache' | 'api' | None（失败时 data 是错误字典）
@@ -115,6 +115,8 @@ def fetch(openid: str | None = None, qq: str | None = None, username: str | None
         rec = get_binding(openid) or {}
         qq = rec.get("qq")
         username = rec.get("username")
+    if not (qq or username):
+        qq = fallback_qq
     if not (qq or username):
         return {"ok": False, "error": "没有绑定：先说「我是 <QQ号>」让我记住"}, None
 

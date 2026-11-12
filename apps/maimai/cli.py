@@ -8,6 +8,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import sys
 
 import bindings
@@ -40,6 +41,8 @@ def main(argv=None) -> int:
     p.add_argument("--top", type=int, default=5)
     p.add_argument("--qq", help="按绑定的 QQ 号查")
     p.add_argument("--openid", help="按群成员 openid 查（需先 bind）")
+    p.add_argument("--fallback-qq", help="没有绑定时按此 QQ 号查 B50")
+    p.add_argument("--json", action="store_true", help="输出完整 B50 JSON")
     p.add_argument("--refresh", action="store_true", help="忽略缓存，强制重拉")
     p.add_argument("--all", action="store_true", help="查全部成绩（需要导入令牌），并给出推分建议")
 
@@ -84,8 +87,12 @@ def main(argv=None) -> int:
 
     if args.cmd == "bind":
         try:
+            if not args.qq and not args.username and args.token:
+                records.set_token(args.openid, args.token)
+                print("已保存导入令牌。")
+                return 0
             rec = bindings.bind(args.openid, qq=args.qq, username=args.username)
-            if getattr(args, "token", None):
+            if args.token:
                 records.set_token(args.openid, args.token)
         except ValueError as e:
             print(f"绑定失败：{e}")
@@ -105,7 +112,11 @@ def main(argv=None) -> int:
     if args.cmd == "player":
         data, source = bindings.fetch(
             openid=args.openid, qq=args.qq, username=args.username, refresh=args.refresh,
+            fallback_qq=args.fallback_qq,
         )
+        if args.json:
+            print(json.dumps(data, ensure_ascii=False))
+            return int(data.get("ok") is False)
         if data.get("ok") is False:
             print(f"查不到：{data.get('error')}")
             print("（对方需要先在查分器注册、绑定 QQ 并公开成绩）")
